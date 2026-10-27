@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#0b0c10]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BandSpace - Rehearsal Room Booking System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#0b0c10',
+                            800: '#12141d',
+                            700: '#1a1d2b',
+                            600: '#25293d',
+                            500: '#343a54',
+                        },
+                        vibe: {
+                            purple: '#7c3aed',
+                            neon: '#a855f7',
+                            pink: '#ec4899',
+                            cyan: '#06b6d4',
+                            emerald: '#10b981',
+                            amber: '#f59e0b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0c10;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #25293d;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7c3aed;
+        }
+        
+        /* Low-Fi Sketch Theme Override */
+        .lo-fi-mode {
+            font-family: 'Courier New', Courier, monospace !important;
+        }
+        .lo-fi-mode * {
+            background-color: #ffffff !important;
+            color: #111111 !important;
+            border-color: #000000 !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+            background-image: none !important;
+            border-style: solid !important;
+        }
+        .lo-fi-mode .lo-fi-box {
+            border: 2px solid #000 !important;
+            border-radius: 0px !important;
+        }
+        .lo-fi-mode .lo-fi-btn {
+            border: 2px solid #000 !important;
+            background: #eee !important;
+            font-weight: bold !important;
+            border-radius: 0px !important;
+        }
+        
+        /* Neon glows */
+        .neon-glow-purple {
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.35);
+        }
+        .neon-glow-pink {
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.35);
+        }
+        .neon-border {
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+    </style>
+</head>
+<body class="h-full font-sans text-slate-200 antialiased selection:bg-vibe-purple selection:text-white flex flex-col">
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm"></div>
+
+    <!-- MAIN WRAPPER -->
+    <div id="appRoot" class="flex flex-col lg:flex-row h-screen overflow-hidden bg-dark-900">
+
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="w-full lg:w-64 bg-dark-800 border-b lg:border-b-0 lg:border-r border-dark-600 flex flex-col justify-between shrink-0">
+            <div>
+                <!-- Brand Header -->
+                <div class="p-5 flex items-center justify-between border-b border-dark-600/50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-vibe-purple to-vibe-pink flex items-center justify-center text-white neon-glow-purple">
+                            <i data-lucide="disc-3" class="w-6 h-6 animate-spin" style="animation-duration: 12s;"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-extrabold text-xl tracking-wider text-white flex items-center gap-1.5">
+                                BAND<span class="text-vibe-neon">SPACE</span>
+                            </h1>
+                            <p class="text-[10px] font-mono text-slate-400 tracking-widest uppercase">BERLIN • STUDIO A/B</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Mode Toggle Bar (Lo-Fi vs Vibe Build) -->
+                <div class="p-3 bg-dark-700/40 border-b border-dark-600/40">
+                    <div class="text-[11px] font-semibold text-slate-400 mb-2 uppercase tracking-wider px-1 flex items-center gap-1.5">
+                        <i data-lucide="layers" class="w-3.5 h-3.5 text-vibe-neon"></i> Prototype View Mode
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5 bg-dark-900 p-1 rounded-lg border border-dark-600">
+                        <button id="btnVibeMode" onclick="setPrototypeMode('vibe')" class="py-1.5 px-2 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 bg-vibe-purple text-white shadow transition-all">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Vibe Build
+                        </button>
+                        <button id="btnLofiMode" onclick="setPrototypeMode('lofi')" class="py-1.5 px-2 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 text-slate-400 hover:text-white hover:bg-dark-700 transition-all">
+                            <i data-lucide="file-code" class="w-3.5 h-3.5"></i> Lo-Fi Wireframe
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="p-3 space-y-1">
+                    <button onclick="switchTab('calendar')" id="nav-calendar" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium bg-vibe-purple/20 text-vibe-neon border border-vibe-purple/30 transition-all">
+                        <i data-lucide="calendar" class="w-4 h-4"></i> Schedule & Bookings
+                    </button>
+                    <button onclick="switchTab('rooms')" id="nav-rooms" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-dark-700 hover:text-white transition-all">
+                        <i data-lucide="speaker" class="w-4 h-4"></i> Studio Gear Specs
+                    </button>
+                    <button onclick="switchTab('export')" id="nav-export" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-dark-700 hover:text-white transition-all">
+                        <i data-lucide="share-2" class="w-4 h-4"></i> Chat Exporter
+                    </button>
+                    <button onclick="switchTab('lofi-doc')" id="nav-lofi-doc" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-dark-700 hover:text-white transition-all">
+                        <i data-lucide="pen-tool" class="w-4 h-4"></i> Week 4 Design Doc
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Live Status & Quick Action -->
+            <div class="p-4 border-t border-dark-600/60 bg-dark-900/60 space-y-3">
+                <div class="bg-dark-700/50 p-3 rounded-xl border border-dark-600">
+                    <div class="flex items-center justify-between text-xs mb-1">
+                        <span class="text-slate-400 font-medium">Studio A Status</span>
+                        <span class="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-vibe-emerald/20 text-vibe-emerald font-semibold border border-vibe-emerald/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-vibe-emerald animate-ping"></span> OCCUPIED
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-200 font-semibold truncate">Soundwave Collective</p>
+                    <p class="text-[10px] text-slate-400 font-mono mt-0.5">Until 20:00 (1.5h left)</p>
+                </div>
+
+                <button onclick="openBookingModal()" class="w-full py-2.5 px-4 bg-gradient-to-r from-vibe-purple to-vibe-pink hover:opacity-95 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-vibe-purple/2 transition-all transform active:scale-[0.98]">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Reserve Slot
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT CONTAINER -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto bg-dark-900">
+            
+            <!-- TOP BAR -->
+            <header class="h-16 border-b border-dark-600/60 bg-dark-800/60 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20">
+                <div class="flex items-center gap-4">
+                    <h2 id="headerTitle" class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-5 h-5 text-vibe-neon"></i> Rehearsal Master Schedule
+                    </h2>
+                    <span id="conflictPreventionBadge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-vibe-emerald/10 text-vibe-emerald border border-vibe-emerald/30">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Anti Double-Booking Active
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="relative hidden md:block w-48">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text" id="searchInput" onkeyup="filterBookings()" placeholder="Filter band or room..." class="w-full bg-dark-900 border border-dark-600 text-xs rounded-xl pl-9 pr-3 py-2 text-slate-200 focus:outline-none focus:border-vibe-purple">
+                    </div>
+
+                    <button onclick="openBookingModal()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-vibe-purple/20 text-vibe-neon border border-vibe-purple/40 text-xs font-semibold rounded-xl hover:bg-vibe-purple/30 transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i> New Booking
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB CONTENT PANELS -->
+            <div class="p-4 md:p-6 flex-1 space-y-6">
+
+                <!-- 1. CALENDAR / BOOKINGS TAB -->
+                <div id="tab-calendar" class="tab-panel space-y-6">
+                    
+                    <!-- Quick Filters & View Toggle -->
+                    <div class="flex flex-wrap items-center justify-between gap-4 bg-dark-800 p-4 rounded-2xl border border-dark-600">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Studio Filter:</span>
+                            <button onclick="filterRoom('ALL')" id="filter-room-all" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-vibe-purple text-white shadow">All Rooms</button>
+                            <button onclick="filterRoom('Studio A')" id="filter-room-a" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-dark-700 text-slate-300 hover:text-white hover:bg-dark-600 border border-dark-500">Studio A (Main Stage)</button>
+                            <button onclick="filterRoom('Studio B')" id="filter-room-b" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-dark-700 text-slate-300 hover:text-white hover:bg-dark-600 border border-dark-500">Studio B (Acoustic Lounge)</button>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeView('week')" id="view-week-btn" class="px-3 py-1.5 bg-dark-700 border border-dark-500 text-white text-xs font-semibold rounded-lg">Week View</button>
+                            <button onclick="changeView('day')" id="view-day-btn" class="px-3 py-1.5 bg-dark-900 text-slate-400 text-xs font-semibold rounded-lg hover:text-white">Day View</button>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Calendar Grid -->
+                    <div class="bg-dark-800 rounded-2xl border border-dark-600 overflow-hidden shadow-xl">
+                        <div class="p-4 border-b border-dark-600 flex items-center justify-between bg-dark-800/80">
+                            <div class="flex items-center gap-3">
+                                <button onclick="navigateWeek(-1)" class="p-1.5 rounded-lg bg-dark-700 text-slate-300 hover:text-white hover:bg-dark-600"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <h3 id="calendarDateRange" class="font-bold text-white text-sm md:text-base font-mono">Oct 26 - Nov 01, 2026</h3>
+                                <button onclick="navigateWeek(1)" class="p-1.5 rounded-lg bg-dark-700 text-slate-300 hover:text-white hover:bg-dark-600"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                            </div>
+                            <button onclick="jumpToToday()" class="px-3 py-1 text-xs font-semibold bg-dark-700 text-vibe-neon border border-vibe-purple/40 rounded-lg hover:bg-vibe-purple/20">Today</button>
+                        </div>
+
+                        <!-- Calendar Header Days -->
+                        <div id="calendarGridHeader" class="grid grid-cols-7 text-center border-b border-dark-600 bg-dark-900/50 text-xs font-semibold text-slate-400">
+                            <!-- Populated dynamically -->
+                        </div>
+
+                        <!-- Calendar Grid Slots -->
+                        <div id="calendarGridBody" class="grid grid-cols-7 min-h-[480px] divide-x divide-dark-600/50 bg-dark-900/20">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Live Activity Feed & Stats Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Activity Feed -->
+                        <div class="lg:col-span-2 bg-dark-800 p-5 rounded-2xl border border-dark-600 space-y-4">
+                            <div class="flex items-center justify-between border-b border-dark-600 pb-3">
+                                <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <i data-lucide="activity" class="w-4 h-4 text-vibe-pink"></i> Live Band Activity Feed
+                                </h4>
+                                <span class="text-[11px] font-mono text-slate-400">Real-time sync</span>
+                            </div>
+                            <div id="activityFeedList" class="space-y-3 max-h-56 overflow-y-auto pr-1">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Anti-Conflict Guard Card -->
+                        <div class="bg-gradient-to-br from-dark-800 to-dark-700 p-5 rounded-2xl border border-vibe-purple/30 space-y-4 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center gap-2 text-vibe-neon font-bold text-sm mb-2">
+                                    <i data-lucide="lock" class="w-4 h-4"></i> Conflict Prevention Logic
+                                </div>
+                                <p class="text-xs text-slate-300 leading-relaxed">
+                                    BandSpace automatically validates time overlaps before saving. Zero overlapping bookings allowed across shared room channels.
+                                </p>
+                            </div>
+
+                            <div class="space-y-2 pt-3 border-t border-dark-600/60 text-xs font-mono">
+                                <div class="flex justify-between text-slate-400">
+                                    <span>Weekly Capacity:</span>
+                                    <span class="text-white font-bold">56 Hours</span>
+                                </div>
+                                <div class="flex justify-between text-slate-400">
+                                    <span>Booked Hours:</span>
+                                    <span id="statBookedHours" class="text-vibe-neon font-bold">18.5 Hours</span>
+                                </div>
+                                <div class="w-full bg-dark-900 rounded-full h-2 overflow-hidden mt-1">
+                                    <div id="statProgressBar" class="bg-gradient-to-r from-vibe-purple to-vibe-pink h-full" style="width: 33%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 2. ROOM GEAR SPECS TAB -->
+                <div id="tab-rooms" class="tab-panel hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Studio A -->
+                        <div class="bg-dark-800 rounded-2xl border border-vibe-purple/40 p-6 space-y-5 relative overflow-hidden shadow-lg">
+                            <div class="absolute top-0 right-0 bg-vibe-purple/20 text-vibe-neon text-[10px] font-bold px-3 py-1 rounded-bl-xl border-l border-b border-vibe-purple/40 font-mono">
+                                MAIN STAGE SETUP
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-vibe-purple/20 border border-vibe-purple/40 flex items-center justify-center text-vibe-neon font-bold text-xl">
+                                    A
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white">Studio A - Main Stage</h3>
+                                    <p class="text-xs text-slate-400">Capacity: Up to 7 musicians • Soundproofed 45m²</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Gear & Amenities</h4>
+                                <div class="grid grid-cols-2 gap-2 text-xs font-mono text-slate-300">
+                                    <div class="bg-dark-900 p-2.5 rounded-xl border border-dark-600 flex items-center gap-2">
+                                        <i data-lucide="drum" class="w-4 h-4 text-vibe-pink"></i> Tama Starclassic Drumkit
+                                    </div>
+                                    <div class="bg-dark-900 p-2.5 rounded-xl border border-dark-600 flex items-center gap-2">
+                                        <i data-lucide="zap" class="w-4 h-4 text-vibe-amber"></i> Marshall JCM900 Half-Stack
+                                    </div>
+                                    <div class="bg-dark-900 p-2.5 rounded-xl border border-dark-600 flex items-center gap-2">
+                                        <i data-lucide="radio" class="w-4 h-4 text-vibe-cyan"></i> Ampeg SVT-4PRO Bass Rig
+                                    </div>
+                                    <div class="bg-dark-900 p-2.5 rounded-xl border border-dark-600 flex items-center gap-2">
+                                        <i data-lucide="mic-2" class="w-4 h-4 text-vibe-emerald"></i> 4x Shure SM58 + PA System
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="quickSelectRoom('Studio A')" class="w-full py-2.5 bg-vibe-purple hover:bg-vibe-purple/90 text-white font-bold text-xs rounded-xl shadow transition-all">
+                                Book Studio A Now
+                            </button>
+                        </div>
+
+                        <!-- Studio B -->
+                        <div class="bg-dark-800 rounded-2xl border border-dark-600 p-6 space-y-5 relative overflow-hidden shadow-lg">
+                            <div class="absolute top-0 right-0 bg-dark-700 text-slate-300 text-[10px] font-bold px-3 py-1 rounded-bl-xl border-l border-b border-dark-600 font-mono">
+                                ACOUSTIC & INDIE
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-vibe-pink/20 border border-vibe-pink/40 flex items-center justify-center text-vibe-pink font-bold text-xl">
+                                    B
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white">Studio B - Acoustic Lounge</h3>
+                                    <p class="text-xs text-slate-400">Capacity: Up to 4 musicians • Warm Wood Acoustics 25m²</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Gear & Amenities</h4>
+                                <div class="grid grid-cols-2 gap-2 text-xs font-mono text-slate-300">
+                                    <div class="bg-dark-900 p-2.5 rounded-xl border border-dark-600 flex items-center gap-2">
+                                        <i data-lucide="drum" class="w-4 h-4 text-vibe-pink"></i> Yamaha Stage Custom Jazz
+                                    </div>
+                                    <div class="bg-dark-900 p-2.5 rounded-xl border border-dark-600 flex items-center gap-2">
+                                        <i data-lucide="zap" class="w-4 h-4 text-vibe-amber"></i> Vox AC30 Tube Amp
+                                    </div>
+                                    <div class="bg-dark-900 p-2.5 rounded-xl border border-dark-600 flex items-center gap-2">
+                                        <i data-lucide="sliders" class="w-4 h-4 text-vibe-cyan"></i> Fender Bassman Combo
+                                    </div>
+                                    <div class="bg-dark-900 p-2.5 rounded-xl border border-dark-600 flex items-center gap-2">
+                                        <i data-lucide="music" class="w-4 h-4 text-vibe-emerald"></i> Nord Stage 3 Keyboard
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="quickSelectRoom('Studio B')" class="w-full py-2.5 bg-dark-700 hover:bg-dark-600 text-white font-bold text-xs rounded-xl shadow border border-dark-500 transition-all">
+                                Book Studio B Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. CHAT EXPORTER TAB -->
+                <div id="tab-export" class="tab-panel hidden space-y-6">
+                    <div class="bg-dark-800 p-6 rounded-2xl border border-dark-600 max-w-2xl mx-auto space-y-5">
+                        <div class="flex items-center justify-between border-b border-dark-600 pb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                    <i data-lucide="share-2" class="w-5 h-5 text-vibe-neon"></i> Group Chat Schedule Exporter
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Solves Week 3 finding: Generates clean copy-paste text for WhatsApp / Discord threads.</p>
+                            </div>
+                            <button onclick="copyChatExport()" class="px-4 py-2 bg-vibe-purple hover:bg-vibe-purple/90 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow">
+                                <i data-lucide="copy" class="w-4 h-4"></i> Copy Text
+                            </button>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-xs font-semibold text-slate-300">Formatted Text Output:</label>
+                            <pre id="chatExportPreview" class="w-full bg-dark-900 p-4 rounded-xl border border-dark-600 text-xs font-mono text-vibe-neon leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-80">
+                            </pre>
+                        </div>
+
+                        <div class="p-3 bg-vibe-purple/10 border border-vibe-purple/30 rounded-xl text-xs text-slate-300 flex items-start gap-2">
+                            <i data-lucide="info" class="w-4 h-4 text-vibe-neon shrink-0 mt-0.5"></i>
+                            <span>Posting this weekly summary prevents members from trying to make bookings inside casual conversation threads!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. WEEK 4 DESIGN DOCUMENTATION TAB -->
+                <div id="tab-lofi-doc" class="tab-panel hidden space-y-6">
+                    <div class="bg-dark-800 p-6 rounded-2xl border border-dark-600 max-w-4xl mx-auto space-y-6">
+                        <div class="border-b border-dark-600 pb-4">
+                            <span class="text-xs font-mono text-vibe-neon uppercase tracking-wider">Week 4 Deliverable Documentation</span>
+                            <h3 class="text-xl font-extrabold text-white mt-1">UX Evolution: From Context Mapping to Vibe-Coded Build</h3>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-dark-900 p-5 rounded-xl border border-dark-600 space-y-3">
+                                <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <i data-lucide="search" class="w-4 h-4 text-vibe-pink"></i> Week 3 Context Insights
+                                </h4>
+                                <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside">
+                                    <li><strong>The Problem:</strong> Band members booked times in multiple separate WhatsApp group chats, leading to frequent double-bookings on rehearsal night.</li>
+                                    <li><strong>Unwritten Expectation:</strong> "Whoever called it first gets it"—which failed when messages were missed or unread.</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-dark-900 p-5 rounded-xl border border-dark-600 space-y-3">
+                                <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-vibe-emerald"></i> Week 4 Design Solution
+                                </h4>
+                                <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside">
+                                    <li><strong>Centralized Single Source:</strong> Real-time reservation grid preventing time collisions.</li>
+                                    <li><strong>Lo-Fi Mode Switch:</strong> Built-in toggle to view structural wireframe design versus high-fidelity musician vibe UI.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-dark-700/50 rounded-xl border border-dark-600 text-center">
+                            <p class="text-xs text-slate-300 font-mono">
+                                BandSpace UI • Designed & Implemented for GUI Design & Web Optimization I (Week 4)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- BOOKING MODAL -->
+    <div id="bookingModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-800 border border-vibe-purple/40 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 relative animate-in fade-in zoom-in-95 duration-150">
+            <button onclick="closeBookingModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+
+            <div class="border-b border-dark-600 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="calendar-plus" class="w-5 h-5 text-vibe-neon"></i> Reserve Rehearsal Slot
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Anti Double-Booking algorithm will validate in real time.</p>
+            </div>
+
+            <!-- Validation Warning Box -->
+            <div id="modalAlertBox" class="hidden p-3 rounded-xl text-xs font-semibold flex items-center gap-2"></div>
+
+            <form id="bookingForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Band / Artist Name</label>
+                    <input type="text" id="formBandName" required placeholder="e.g., Soundwave Collective" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-vibe-purple">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Contact Person</label>
+                        <input type="text" id="formContact" required placeholder="Alex M." class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-vibe-purple">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Studio Room</label>
+                        <select id="formRoom" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-vibe-purple">
+                            <option value="Studio A">Studio A (Main Stage)</option>
+                            <option value="Studio B">Studio B (Acoustic Lounge)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-1">
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Date</label>
+                        <input type="date" id="formDate" required class="w-full bg-dark-900 border border-dark-600 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-vibe-purple">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Start Time</label>
+                        <select id="formStartTime" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-vibe-purple">
+                            <option value="10:00">10:00</option>
+                            <option value="12:00">12:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="16:00">16:00</option>
+                            <option value="18:00">18:00</option>
+                            <option value="20:00">20:00</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Duration</label>
+                        <select id="formDuration" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-vibe-purple">
+                            <option value="1">1 Hour</option>
+                            <option value="2" selected>2 Hours</option>
+                            <option value="3">3 Hours</option>
+                            <option value="4">4 Hours</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Notes / Special Gear Needed</label>
+                    <input type="text" id="formNotes" placeholder="Need extra condenser mics or double bass pedal" class="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-vibe-purple">
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-dark-600">
+                    <button type="button" onclick="closeBookingModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-gradient-to-r from-vibe-purple to-vibe-pink text-white font-bold text-xs rounded-xl shadow hover:opacity-95">Confirm Booking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // App State
+        let prototypeMode = 'vibe'; // 'vibe' or 'lofi'
+        let currentTab = 'calendar';
+        let currentRoomFilter = 'ALL';
+        let currentCalendarView = 'week';
+        let currentWeekOffset = 0; // 0 = current week
+
+        // Preloaded Initial Realistic Sample Bookings
+        let bookings = [
+            {
+                id: 'b1',
+                band: 'Soundwave Collective',
+                contact: 'Alex M.',
+                room: 'Studio A',
+                date: getRelativeDateStr(0), // Today
+                startTime: '18:00',
+                duration: 2, // 18:00 - 20:00
+                notes: 'Preparing set for Berlin Indie Fest'
+            },
+            {
+                id: 'b2',
+                band: 'The Velvet Echoes',
+                contact: 'Sarah K.',
+                room: 'Studio B',
+                date: getRelativeDateStr(0),
+                startTime: '14:00',
+                duration: 3, // 14:00 - 17:00
+                notes: 'Acoustic vocal tracking session'
+            },
+            {
+                id: 'b3',
+                band: 'Neon Resonance',
+                contact: 'Lukas P.',
+                room: 'Studio A',
+                date: getRelativeDateStr(1), // Tomorrow
+                startTime: '16:00',
+                duration: 2,
+                notes: 'Full drum kit rehearsal'
+            },
+            {
+                id: 'b4',
+                band: 'Berlin Groove Collective',
+                contact: 'Elena R.',
+                room: 'Studio B',
+                date: getRelativeDateStr(2),
+                startTime: '18:00',
+                duration: 2,
+                notes: 'Brass section rehearsal'
+            }
+        ];
+
+        // Activity Log
+        let activityLogs = [
+            { text: 'Soundwave Collective reserved Studio A for Today at 18:00', time: '10 mins ago', type: 'book' },
+            { text: 'The Velvet Echoes confirmed booking in Studio B', time: '1 hour ago', type: 'confirm' },
+            { text: 'System prevented double-booking attempt on Studio A', time: '3 hours ago', type: 'prevent' }
+        ];
+
+        // Init App on Window Load
+        window.onload = function() {
+            lucide.createIcons();
+            setDefaultDate();
+            renderCalendar();
+            renderActivityFeed();
+            updateChatExportText();
+        };
+
+        // Date Helper Functions
+        function getRelativeDateStr(offsetDays) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            return d.toISOString().split('T')[0];
+        }
+
+        function setDefaultDate() {
+            document.getElementById('formDate').value = getRelativeDateStr(0);
+        }
+
+        // Prototype View Switcher (Vibe vs Lo-Fi Wireframe)
+        function setPrototypeMode(mode) {
+            prototypeMode = mode;
+            const root = document.getElementById('appRoot');
+            const btnVibe = document.getElementById('btnVibeMode');
+            const btnLofi = document.getElementById('btnLofiMode');
+
+            if (mode === 'lofi') {
+                root.classList.add('lo-fi-mode');
+                btnLofi.className = "py-1.5 px-2 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 bg-black text-white shadow";
+                btnVibe.className = "py-1.5 px-2 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 text-slate-500 hover:text-black";
+                showToast("Switched to Lo-Fi Wireframe Prototype Mode", "info");
+            } else {
+                root.classList.remove('lo-fi-mode');
+                btnVibe.className = "py-1.5 px-2 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 bg-vibe-purple text-white shadow";
+                btnLofi.className = "py-1.5 px-2 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 text-slate-400 hover:text-white hover:bg-dark-700";
+                showToast("Switched to Vibe-Coded High-Fidelity Build", "success");
+            }
+        }
+
+        // Tab Navigation
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            // Reset Nav Styling
+            ['calendar', 'rooms', 'export', 'lofi-doc'].forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    btn.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium bg-vibe-purple/20 text-vibe-neon border border-vibe-purple/30 transition-all";
+                } else {
+                    btn.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-dark-700 hover:text-white transition-all";
+                }
+            });
+
+            if (tabId === 'export') updateChatExportText();
+        }
+
+        // Calendar Rendering Engine
+        function renderCalendar() {
+            const gridHeader = document.getElementById('calendarGridHeader');
+            const gridBody = document.getElementById('calendarGridBody');
+            
+            gridHeader.innerHTML = '';
+            gridBody.innerHTML = '';
+
+            // Calculate start of week (Monday)
+            const today = new Date();
+            const dayOfWeek = today.getDay(); // 0 is Sun, 1 is Mon
+            const distanceToMon = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek) + (currentWeekOffset * 7);
+            
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() + distanceToMon);
+
+            const daysArr = [];
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(startOfWeek);
+                day.setDate(startOfWeek.getDate() + i);
+                daysArr.push(day);
+            }
+
+            // Update Header Date Range Label
+            const formatDateStr = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            document.getElementById('calendarDateRange').innerText = `${formatDateStr(daysArr[0])} - ${formatDateStr(daysArr[6])}, ${daysArr[0].getFullYear()}`;
+
+            // Render Header Days
+            daysArr.forEach(d => {
+                const dateIso = d.toISOString().split('T')[0];
+                const isToday = dateIso === getRelativeDateStr(0);
+                
+                const dayHeaderEl = document.createElement('div');
+                dayHeaderEl.className = `py-3 border-r border-dark-600/50 flex flex-col items-center justify-center gap-0.5 ${isToday ? 'bg-vibe-purple/10 text-vibe-neon font-bold' : ''}`;
+                dayHeaderEl.innerHTML = `
+                    <span class="text-[10px] uppercase tracking-wider text-slate-400">${d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                    <span class="text-sm font-bold ${isToday ? 'text-vibe-neon' : 'text-slate-200'}">${d.getDate()}</span>
+                `;
+                gridHeader.appendChild(dayHeaderEl);
+
+                // Render Day Column Slots
+                const dayColEl = document.createElement('div');
+                dayColEl.className = "p-1.5 space-y-2 min-h-[460px] flex flex-col justify-start relative";
+
+                // Filter bookings for this day & room
+                const dayBookings = bookings.filter(b => {
+                    const matchesDate = b.date === dateIso;
+                    const matchesRoom = currentRoomFilter === 'ALL' || b.room === currentRoomFilter;
+                    return matchesDate && matchesRoom;
+                });
+
+                if (dayBookings.length === 0) {
+                    dayColEl.innerHTML += `<div class="text-[10px] text-slate-600 font-mono text-center py-8">Open Slot</div>`;
+                } else {
+                    dayBookings.forEach(b => {
+                        const isStudioA = b.room === 'Studio A';
+                        const badgeColor = isStudioA ? 'bg-vibe-purple/20 border-vibe-purple/50 text-vibe-neon' : 'bg-vibe-pink/20 border-vibe-pink/50 text-vibe-pink';
+                        
+                        const card = document.createElement('div');
+                        card.className = `p-2.5 rounded-xl border ${badgeColor} space-y-1 shadow-md hover:scale-[1.02] transition-transform cursor-pointer group relative`;
+                        card.innerHTML = `
+                            <div class="flex items-center justify-between text-[10px] font-mono">
+                                <span class="font-bold">${b.startTime} (${b.duration}h)</span>
+                                <span class="px-1.5 py-0.5 rounded text-[9px] bg-dark-900/60">${b.room}</span>
+                            </div>
+                            <h5 class="text-xs font-bold text-white truncate">${b.band}</h5>
+                            <p class="text-[10px] text-slate-300 truncate">Contact: ${b.contact}</p>
+                            
+                            <!-- Delete Button on hover -->
+                            <button onclick="deleteBooking('${b.id}', event)" class="absolute top-1 right-1 p-1 rounded bg-dark-900 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                            </button>
+                        `;
+                        dayColEl.appendChild(card);
+                    });
+                }
+
+                gridBody.appendChild(dayColEl);
+            });
+
+            lucide.createIcons();
+            updateCapacityStats();
+        }
+
+        // Conflict Checking Engine (Anti Double-Booking Algorithm)
+        function checkConflict(room, date, startTimeStr, durationHours) {
+            const startMinutes = timeToMinutes(startTimeStr);
+            const endMinutes = startMinutes + (durationHours * 60);
+
+            for (let b of bookings) {
+                if (b.room === room && b.date === date) {
+                    const bStart = timeToMinutes(b.startTime);
+                    const bEnd = bStart + (b.duration * 60);
+
+                    // Check overlap condition
+                    if (startMinutes < bEnd && endMinutes > bStart) {
+                        return b; // Return conflicting booking object
+                    }
+                }
+            }
+            return null; // No conflict
+        }
+
+        function timeToMinutes(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        // Form Submission & Conflict Interception
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const band = document.getElementById('formBandName').value.trim();
+            const contact = document.getElementById('formContact').value.trim();
+            const room = document.getElementById('formRoom').value;
+            const date = document.getElementById('formDate').value;
+            const startTime = document.getElementById('formStartTime').value;
+            const duration = parseInt(document.getElementById('formDuration').value);
+            const notes = document.getElementById('formNotes').value.trim();
+
+            const alertBox = document.getElementById('modalAlertBox');
+
+            // Run Anti Double-Booking Check
+            const conflict = checkConflict(room, date, startTime, duration);
+
+            if (conflict) {
+                // Double booking detected! Block submission & show alert.
+                alertBox.className = "p-3 rounded-xl text-xs font-semibold flex items-center gap-2 bg-vibe-amber/20 text-vibe-amber border border-vibe-amber/40";
+                alertBox.innerHTML = `
+                    <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+                    <div>
+                        <strong>Conflict Blocked!</strong> ${conflict.band} already reserved ${room} on this date during ${conflict.startTime} (${conflict.duration}h).
+                    </div>
+                `;
+                alertBox.classList.remove('hidden');
+                lucide.createIcons();
+                
+                // Add system activity log of prevented collision
+                logActivity(`Prevented collision for "${band}" on ${room} at ${startTime}`, 'prevent');
+                return;
+            }
+
+            // Save new booking
+            const newBooking = {
+                id: 'b_' + Date.now(),
+                band,
+                contact,
+                room,
+                date,
+                startTime,
+                duration,
+                notes
+            };
+
+            bookings.push(newBooking);
+            closeBookingModal();
+            renderCalendar();
+            showToast(`Booking confirmed for ${band}!`, "success");
+
+            logActivity(`${band} reserved ${room} (${date} @ ${startTime})`, 'book');
+        }
+
+        function deleteBooking(id, e) {
+            e.stopPropagation();
+            const b = bookings.find(x => x.id === id);
+            if (b) {
+                bookings = bookings.filter(x => x.id !== id);
+                renderCalendar();
+                showToast(`Cancelled reservation for ${b.band}`, "info");
+                logActivity(`Cancelled ${b.band} booking for ${b.room}`, 'cancel');
+            }
+        }
+
+        // Filters & Navigation Controls
+        function filterRoom(roomName) {
+            currentRoomFilter = roomName;
+            ['all', 'a', 'b'].forEach(r => {
+                const btn = document.getElementById(`filter-room-${r}`);
+                if ((r === 'all' && roomName === 'ALL') || (r === 'a' && roomName === 'Studio A') || (r === 'b' && roomName === 'Studio B')) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-vibe-purple text-white shadow";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-dark-700 text-slate-300 hover:text-white border border-dark-500";
+                }
+            });
+            renderCalendar();
+        }
+
+        function navigateWeek(direction) {
+            currentWeekOffset += direction;
+            renderCalendar();
+        }
+
+        function jumpToToday() {
+            currentWeekOffset = 0;
+            renderCalendar();
+        }
+
+        function quickSelectRoom(roomName) {
+            document.getElementById('formRoom').value = roomName;
+            openBookingModal();
+        }
+
+        function filterBookings() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            if (!query) {
+                renderCalendar();
+                return;
+            }
+            // Temporarily filter list rendering
+            renderCalendar();
+        }
+
+        // Live Activity & Stats Engine
+        function logActivity(text, type) {
+            activityLogs.unshift({
+                text,
+                time: 'Just now',
+                type
+            });
+            renderActivityFeed();
+        }
+
+        function renderActivityFeed() {
+            const list = document.getElementById('activityFeedList');
+            list.innerHTML = '';
+
+            activityLogs.forEach(log => {
+                let icon = 'info';
+                let iconColor = 'text-vibe-neon';
+                if (log.type === 'prevent') { icon = 'shield-alert'; iconColor = 'text-vibe-amber'; }
+                if (log.type === 'book') { icon = 'check-circle'; iconColor = 'text-vibe-emerald'; }
+                if (log.type === 'cancel') { icon = 'x-circle'; iconColor = 'text-vibe-pink'; }
+
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-2.5 rounded-xl bg-dark-900/60 border border-dark-600/60 text-xs";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <i data-lucide="${icon}" class="w-4 h-4 ${iconColor} shrink-0"></i>
+                        <span class="text-slate-300 font-medium">${log.text}</span>
+                    </div>
+                    <span class="text-[10px] font-mono text-slate-500 shrink-0 ml-2">${log.time}</span>
+                `;
+                list.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function updateCapacityStats() {
+            const totalHours = bookings.reduce((sum, b) => sum + b.duration, 0);
+            document.getElementById('statBookedHours').innerText = `${totalHours} Hours`;
+            const percentage = Math.min(Math.round((totalHours / 56) * 100), 100);
+            document.getElementById('statProgressBar').style.width = `${percentage}%`;
+        }
+
+        // Chat Exporter Engine
+        function updateChatExportText() {
+            let txt = `📅 BANDSPACE REHEARSAL SCHEDULE SUMMARY\n`;
+            txt += `======================================\n\n`;
+
+            const sorted = [...bookings].sort((a,b) => a.date.localeCompare(b.date));
+            
+            sorted.forEach(b => {
+                txt += `🎸 ${b.date} | ${b.startTime} (${b.duration}h)\n`;
+                txt += `   • Room: ${b.room}\n`;
+                txt += `   • Band: ${b.band} (Contact: ${b.contact})\n`;
+                if (b.notes) txt += `   • Notes: ${b.notes}\n`;
+                txt += `--------------------------------------\n`;
+            });
+
+            txt += `\n✨ Booked automatically via BandSpace System (No double-bookings allowed!)`;
+            document.getElementById('chatExportPreview').innerText = txt;
+        }
+
+        function copyChatExport() {
+            const text = document.getElementById('chatExportPreview').innerText;
+            
+            // Fallback copy for iframe environment
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            showToast("Copied schedule to clipboard! Ready to paste into WhatsApp.", "success");
+        }
+
+        // Modal Controls
+        function openBookingModal() {
+            document.getElementById('modalAlertBox').classList.add('hidden');
+            document.getElementById('bookingModal').classList.remove('hidden');
+        }
+
+        function closeBookingModal() {
+            document.getElementById('bookingModal').classList.add('hidden');
+        }
+
+        // Toast Feedback System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            let typeStyles = "bg-dark-800 text-slate-200 border-vibe-purple/40";
+            if (type === 'success') typeStyles = "bg-dark-800 text-vibe-emerald border-vibe-emerald/40";
+            if (type === 'amber') typeStyles = "bg-dark-800 text-vibe-amber border-vibe-amber/40";
+
+            toast.className = `p-3.5 rounded-xl border ${typeStyles} shadow-2xl text-xs font-semibold flex items-center gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-md`;
+            toast.innerHTML = `
+                <i data-lucide="info" class="w-4 h-4 shrink-0"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
